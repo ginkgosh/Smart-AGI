@@ -8,26 +8,50 @@
           <h2 class="left-aligned">卡片设计区</h2>
         </div>
         <div class="card">
-          <el-form :model="form" label-width="80px">
-            <el-form-item label="姓名">
-              <el-input v-model="form.name" placeholder="请输入姓名" />
-            </el-form-item>
-            <el-form-item label="邮箱">
-              <el-input v-model="form.email" placeholder="请输入邮箱" />
-            </el-form-item>
-            <el-form-item label="描述">
-              <el-input
-                v-model="form.description"
-                type="textarea"
-                placeholder="请输入描述"
-                :rows="4"
+          <!-- 第一部分：输入您的需求 -->
+          <div class="section">
+            <h3>输入您的需求</h3>
+            <el-input
+              v-model="requirement"
+              type="textarea"
+              placeholder="请输入您的需求"
+              :rows="4"
+              style="width: 100%"
+            />
+          </div>
+
+          <!-- 第二部分：选择模型 -->
+          <div class="section">
+            <h3>选择模型</h3>
+            <el-select v-model="selectedModel" placeholder="请选择模型" style="width: 100%">
+              <el-option
+                v-for="model in modelOptions"
+                :key="model.value"
+                :label="model.label"
+                :value="model.value"
               />
-            </el-form-item>
-            <el-form-item>
-              <el-button type="primary" @click="submitForm">提交</el-button>
-              <el-button @click="resetForm">重置</el-button>
-            </el-form-item>
-          </el-form>
+            </el-select>
+          </div>
+
+          <!-- 第三部分：生成按钮 -->
+          <div class="section">
+            <el-button
+              type="primary"
+              @click="generateContent"
+              :loading="loading"
+              style="width: 100%"
+            >
+              根据需求生成
+            </el-button>
+          </div>
+
+          <!-- 第四部分：展示后端返回内容 -->
+          <div v-if="resultContent" class="section">
+            <h3>生成结果</h3>
+            <div class="result-content">
+              {{ resultContent }}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -61,6 +85,20 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
+import axios from 'axios'
+
+// 新增需求相关的数据
+const requirement = ref('')
+const selectedModel = ref('')
+const resultContent = ref('')
+const loading = ref(false)
+
+// 模型选项
+const modelOptions = [
+  { label: '模型A', value: 'model_a' },
+  { label: '模型B', value: 'model_b' },
+  { label: '模型C', value: 'model_c' }
+]
 
 // 表单数据
 const form = reactive({
@@ -94,6 +132,39 @@ const clearInfo = () => {
 // 显示消息
 const showMessage = () => {
   ElMessage.success('您已成功触发交互事件！')
+}
+
+// 根据需求生成内容
+const generateContent = async () => {
+  if (!requirement.value) {
+    ElMessage.warning('请输入您的需求！')
+    return
+  }
+
+  if (!selectedModel.value) {
+    ElMessage.warning('请选择模型！')
+    return
+  }
+
+  loading.value = true
+  try {
+    // 调用后端API
+    const response = await axios.post('http://127.0.0.1:8080/api/gen', {
+      requirement: requirement.value,
+      model: selectedModel.value
+    })
+
+    // 展示返回的内容
+    resultContent.value =
+      response.data.content || response.data.result || JSON.stringify(response.data)
+    ElMessage.success('生成成功！')
+  } catch (error) {
+    console.error('生成失败:', error)
+    ElMessage.error('生成失败，请稍后重试！')
+    resultContent.value = '生成失败，请稍后重试！'
+  } finally {
+    loading.value = false
+  }
 }
 </script>
 
@@ -136,10 +207,22 @@ const showMessage = () => {
   flex-direction: column;
 }
 
-.card .el-form {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
+.section {
+  margin-bottom: 20px;
+}
+
+.section h3 {
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.result-content {
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  padding: 12px;
+  min-height: 100px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
 }
 
 .info-display {
