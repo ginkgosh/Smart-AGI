@@ -135,7 +135,8 @@ pnpm run build:pro
 
 ![image-20221010214526082](https://ktianc.oss-cn-beijing.aliyuncs.com/resource/images/1695375058/1695375058542fcf76.jpg)
 
-
+# 启动
+pnpm run dev
 # 登录用户
 15020221010 / kinit2022
 
